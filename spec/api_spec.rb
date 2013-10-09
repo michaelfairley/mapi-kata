@@ -20,7 +20,34 @@ describe "Microblogging API" do
       }
     end
 
-    it "doesn't create the user if the username already exists"
+    it "doesn't create the user if the username already exists" do
+      username = random_string(8)
+      realname = random_string(8)
+
+      response = MAPI.create_user(
+        :username => username,
+        :real_name => realname,
+      )
+
+      response.code.should == 303
+      response.headers[:location].should == MAPI.uri("/users/#{username}")
+
+      response = MAPI.create_user(
+        :username => username,
+        :real_name => realname,
+      )
+
+      response.code.should == 422
+      JSON.parse(response.body).should == {
+        "errors" => {
+          "username" => [
+            "is taken"
+          ],
+        },
+      }
+
+    end
+
     it "doesn't create the user if the password is too short"
   end
 
