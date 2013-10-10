@@ -26,7 +26,6 @@ describe "Microblogging API" do
 
       response = MAPI.create_user(
         :username => username,
-        :real_name => realname,
       )
 
       response.code.should == 303
@@ -34,7 +33,6 @@ describe "Microblogging API" do
 
       response = MAPI.create_user(
         :username => username,
-        :real_name => realname,
       )
 
       response.code.should == 422
@@ -45,10 +43,29 @@ describe "Microblogging API" do
           ],
         },
       }
-
     end
 
-    it "doesn't create the user if the password is too short"
+    it "doesn't create the user if the password is too short" do
+      username = random_string(8)
+      realname = random_string(8)
+
+      response = MAPI.create_user(
+        :password => "abcd"
+      )
+
+      response.code.should == 422
+      JSON.parse(response.body).should == {
+        "errors" => {
+          "password" => [
+            "is too short"
+          ],
+        },
+      }
+    end
+
+    it "bcrypts the password"
+
+    it "something something pass assignment"
   end
 
   describe "POST /token" do
