@@ -1,4 +1,7 @@
 require "mapi"
+require "sequel"
+
+DB = Sequel.connect('postgres://localhost/microblog_api_kata')
 
 RSpec.configure do |config|
   config.treat_symbols_as_metadata_keys_with_true_values = true

@@ -63,7 +63,18 @@ describe "Microblogging API" do
       }
     end
 
-    it "bcrypts the password"
+    it "bcrypts the password" do
+      username = random_string(8)
+
+      response = MAPI.create_user(
+        :username => username,
+      )
+
+      response.code.should == 303
+      response.headers[:location].should == MAPI.uri("/users/#{username}")
+
+      DB[:users].where(:username => username).first[:password].should =~ /\A\$2a\$1\d\$[.\/A-Za-z0-9]{53}\z/
+    end
 
     it "something something pass assignment"
   end
