@@ -96,8 +96,27 @@ describe "Microblogging API" do
         DB[:users].where(:username => :username).first['id']
     end
 
-    it "does not create a token if the username doesn't exist"
-    it "does not create a token if the password is incorrect"
+    it "does not create a token if the username doesn't exist" do
+      password = random_string(8)
+
+      MAPI.create_user(
+        :password => password,
+      )
+
+      response = MAPI.create_token("junk", password)
+      response.code.should == 401
+    end
+
+    it "does not create a token if the password is incorrect" do
+      username = random_string(8)
+
+      MAPI.create_user(
+        :username => username,
+      )
+
+      response = MAPI.create_token(username, "junk")
+      response.code.should == 401
+    end
   end
 
   describe "POST /users/:username/posts" do
