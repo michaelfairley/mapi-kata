@@ -75,8 +75,6 @@ describe "Microblogging API" do
 
       DB[:users].where(:username => username).first[:password].should =~ /\A\$2a\$1\d\$[.\/A-Za-z0-9]{53}\z/
     end
-
-    it "something something pass assignment"
   end
 
   describe "POST /token" do
