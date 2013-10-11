@@ -78,7 +78,24 @@ describe "Microblogging API" do
   end
 
   describe "POST /token" do
-    it "returns a new token for the user"
+    it "returns a new token for the user" do
+      username = random_string(8)
+      password = random_string(8)
+
+      MAPI.create_user(
+        :username => username,
+        :password => password,
+      )
+
+      response = MAPI.create_token(username, password)
+
+      response.code.should == 200
+      token = JSON.parse(response.body)['token']
+
+      DB[:tokens].where(:value => token).first['user_id'].should ==
+        DB[:users].where(:username => :username).first['id']
+    end
+
     it "does not create a token if the username doesn't exist"
     it "does not create a token if the password is incorrect"
   end

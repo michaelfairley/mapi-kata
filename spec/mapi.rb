@@ -14,6 +14,10 @@ class MAPI
     post("/users", details)
   end
 
+  def self.create_token(username, password)
+    post("/tokens", {:username => username, :password => password})
+  end
+
   def self.get_user(username)
     get_json("/users/#{username}")
   end
