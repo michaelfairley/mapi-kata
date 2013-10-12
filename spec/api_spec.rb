@@ -120,9 +120,53 @@ describe "Microblogging API" do
   end
 
   describe "POST /users/:username/posts" do
-    it "creates the post"
-    it "doesn't create the posts if authenticated as a different user"
-    it "doesn't create the post if not authenticated"
+    it "creates the post" do
+      username = random_string(8)
+
+      token = MAPI.create_user_with_token(username)
+
+      response = MAPI.create_post(
+        :username => username,
+        :token => token,
+        :text => "This is a message!",
+      )
+
+      response.code.should == 303
+      post_id = response.headers[:location][/\d+\z/]
+
+      post = MAPI.get_post(post_id)
+
+      post['text'].should == "This is a message!"
+      post['author'].should == username
+    end
+
+    it "doesn't create the posts if authenticated as a different user" do
+      username = random_string(8)
+
+      token = MAPI.create_user_with_token(username)
+
+      response = MAPI.create_post(
+        :username => "different",
+        :token => token,
+        :text => "This is a message!",
+      )
+
+      response.code.should == 403
+    end
+
+    it "doesn't create the post if not authenticated" do
+      username = random_string(8)
+
+      token = MAPI.create_user_with_token(username)
+
+      response = MAPI.create_post(
+        :username => username,
+        :token => "wrong token",
+        :text => "This is a message!",
+      )
+
+      response.code.should == 401
+    end
   end
 
   describe "GET /posts/:id" do

@@ -18,3 +18,9 @@ DB.create_table :tokens do
   String :value, :text => true
   Integer :user_id
 end
+
+DB.create_table :posts do
+  primary_key :id
+  String :text, :text => true
+  Integer :user_id
+end
