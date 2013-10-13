@@ -170,7 +170,10 @@ describe "Microblogging API" do
   end
 
   describe "GET /posts/:id" do
-    it "returns the post"
+    it "404s if the post doesn't exist" do
+      response = MAPI.get("/posts/123456")
+      response.code.should == 404
+    end
   end
 
   describe "DELETE /posts/:id" do
