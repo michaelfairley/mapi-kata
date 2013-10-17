@@ -3,7 +3,11 @@ require "json"
 
 class MAPI
   def self.uri(path)
-    "http://localhost:12346#{path}"
+    if path.start_with?("http")
+      path
+    else
+      "http://localhost:12346#{path}"
+    end
   end
 
   def self.create_user(details={})
@@ -61,6 +65,17 @@ class MAPI
     headers["Authentication"] = "Token #{token}" if token
 
     RestClient.post(url, JSON.dump(params), headers) do |response|
+      response
+    end
+  end
+
+  def self.delete(path, token=nil)
+    url = uri(path)
+
+    headers = {}
+    headers["Authentication"] = "Token #{token}" if token
+
+    RestClient.delete(url, headers) do |response|
       response
     end
   end

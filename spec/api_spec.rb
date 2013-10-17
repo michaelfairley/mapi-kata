@@ -177,10 +177,71 @@ describe "Microblogging API" do
   end
 
   describe "DELETE /posts/:id" do
-    it "deletes the post"
-    it "is idempotent"
-    it "doesn't delete the post if authenticated as a different user than the post's author"
-    it "doesn't delete the post if not authenticated"
+    it "deletes the post" do
+      username = random_string(8)
+
+      token = MAPI.create_user_with_token(username)
+
+      response = MAPI.create_post(
+        :username => username,
+        :token => token,
+        :text => "This is a message!",
+      )
+
+      response.code.should == 303
+
+      delete_response = MAPI.delete(response.headers[:location], token)
+      delete_response.code.should == 204
+
+      MAPI.get(response.headers[:location]).code.should == 404
+    end
+
+    it "404s for non-existant posts" do
+      username = random_string(8)
+      token = MAPI.create_user_with_token(username)
+
+      delete_response = MAPI.delete("/posts/820123", token)
+      delete_response.code.should == 404
+    end
+
+    it "doesn't delete the post if authenticated as a different user than the post's author" do
+      username = random_string(8)
+
+      token = MAPI.create_user_with_token(username)
+      token2 = MAPI.create_user_with_token(random_string(9))
+
+      response = MAPI.create_post(
+        :username => username,
+        :token => token,
+        :text => "This is a message!",
+      )
+
+      response.code.should == 303
+
+      delete_response = MAPI.delete(response.headers[:location], token2)
+      delete_response.code.should == 403
+
+      MAPI.get(response.headers[:location]).code.should == 200
+    end
+
+    it "doesn't delete the post if not authenticated" do
+      username = random_string(8)
+
+      token = MAPI.create_user_with_token(username)
+
+      response = MAPI.create_post(
+        :username => username,
+        :token => token,
+        :text => "This is a message!",
+      )
+
+      response.code.should == 303
+
+      delete_response = MAPI.delete(response.headers[:location])
+      delete_response.code.should == 401
+
+      MAPI.get(response.headers[:location]).code.should == 200
+    end
   end
 
   describe "GET /users/:username/posts" do
