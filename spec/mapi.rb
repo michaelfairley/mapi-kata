@@ -44,6 +44,10 @@ class MAPI
     get_json("/posts/#{id}")
   end
 
+  def self.get_posts(username)
+    get_json("/users/#{username}/posts")
+  end
+
   def self.get_json(path)
     response = get(path)
     response.code.should == 200

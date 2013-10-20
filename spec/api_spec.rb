@@ -73,7 +73,7 @@ describe "Microblogging API" do
       response.code.should == 303
       response.headers[:location].should == MAPI.uri("/users/#{username}")
 
-      DB[:users].where(:username => username).first[:password].should =~ /\A\$2a\$1\d\$[.\/A-Za-z0-9]{53}\z/
+      DB[:users].where(:username => username).first[:password].should =~ /\A\$2a\$..\$[.\/A-Za-z0-9]{53}\z/
     end
   end
 
@@ -245,11 +245,78 @@ describe "Microblogging API" do
   end
 
   describe "GET /users/:username/posts" do
-    it "returns a sorted list of the user's most recent 50 posts"
+    it "returns a sorted list of the user's most recent 50 posts" do
+      username = random_string(8)
+      token = MAPI.create_user_with_token(username)
+
+      post_ids = 51.times.map do
+        response = MAPI.create_post(
+          :username => username,
+          :token => token,
+          :text => "This is a message!",
+          )
+
+        response.code.should == 303
+        response.headers[:location][/\d+\z/].to_i
+      end.reverse
+
+      posts = MAPI.get_posts(username)["posts"]
+
+      posts.map{ |p| p['id'] }.should == post_ids.first(50)
+    end
+
+    it "404s if the user doesn't exist" do
+      response = MAPI.get("/users/nonexistant/posts")
+      response.code.should == 404
+    end
 
     context "pagination" do
-      it "loads subsequent pages"
-      it "uses cursors properly to avoid repeats if the list has changed since the previous page load"
+      it "loads subsequent pages" do
+        username = random_string(8)
+        token = MAPI.create_user_with_token(username)
+
+        post_ids = 51.times.map do
+          response = MAPI.create_post(
+            :username => username,
+            :token => token,
+            :text => "This is a message!",
+            )
+
+          response.code.should == 303
+          response.headers[:location][/\d+\z/].to_i
+        end.reverse
+
+        next_url = MAPI.get_posts(username)["next"]
+
+        posts = JSON.parse(MAPI.get(next_url))["posts"]
+        posts.map{ |p| p['id'] }.should == [post_ids.last]
+      end
+
+      it "uses cursors properly to avoid repeats if the list has changed since the previous page load" do
+        username = random_string(8)
+        token = MAPI.create_user_with_token(username)
+
+        post_ids = 53.times.map do
+          response = MAPI.create_post(
+            :username => username,
+            :token => token,
+            :text => "This is a message!",
+            )
+
+          response.code.should == 303
+          response.headers[:location][/\d+\z/].to_i
+        end.reverse
+
+        next_url = MAPI.get_posts(username)["next"]
+
+        (post_ids.first(51) + [post_ids.last]).each do |pid|
+          delete_response = MAPI.delete("/posts/#{pid}", token)
+          delete_response.code.should == 204
+        end
+
+        posts = JSON.parse(MAPI.get(next_url))["posts"]
+        posts.map{ |p| p['id'] }.should == [post_ids[51]]
+      end
     end
   end
 
