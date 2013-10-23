@@ -24,3 +24,9 @@ DB.create_table :posts do
   String :text, :text => true
   Integer :user_id
 end
+
+DB.create_table :followings do
+  Integer :follower_id
+  Integer :followee_id
+  primary_key [:follower_id, :followee_id]
+end

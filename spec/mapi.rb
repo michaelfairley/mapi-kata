@@ -48,6 +48,10 @@ class MAPI
     get_json("/users/#{username}/posts")
   end
 
+  def self.follow(follower, followee, token)
+    put("/users/#{follower}/following/#{followee}", token)
+  end
+
   def self.get_json(path)
     response = get(path)
     response.code.should == 200
@@ -69,6 +73,17 @@ class MAPI
     headers["Authentication"] = "Token #{token}" if token
 
     RestClient.post(url, JSON.dump(params), headers) do |response|
+      response
+    end
+  end
+
+  def self.put(path, token=nil, params={})
+    url = uri(path)
+
+    headers = {}
+    headers["Authentication"] = "Token #{token}" if token
+
+    RestClient.put(url, JSON.dump(params), headers) do |response|
       response
     end
   end

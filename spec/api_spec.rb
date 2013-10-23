@@ -14,10 +14,10 @@ describe "Microblogging API" do
       response.code.should == 303
       response.headers[:location].should == MAPI.uri("/users/#{username}")
 
-      MAPI.get_user(username).should == {
+      MAPI.get_user(username).should include(
         "username" => username,
         "real_name" => realname,
-      }
+      )
     end
 
     it "doesn't create the user if the username already exists" do
@@ -321,10 +321,67 @@ describe "Microblogging API" do
   end
 
   describe "PUT /users/:username/following/:other" do
-    it "follows :other"
-    it "is idempotent"
-    it "doesn't follow :other if authenticated in as someone other than :username"
-    it "doesn't follow :other if not authenticated"
+    it "follows :other" do
+      follower = random_string(8)
+      token = MAPI.create_user_with_token(follower)
+
+      followee = random_string(8)
+      MAPI.create_user_with_token(followee)
+
+      response = MAPI.follow(follower, followee, token)
+      response.code.should == 201
+
+      MAPI.get_user(followee)["followers"].should include(follower)
+      MAPI.get_user(follower)["following"].should include(followee)
+    end
+
+    it "is idempotent" do
+      follower = random_string(8)
+      token = MAPI.create_user_with_token(follower)
+
+      followee = random_string(8)
+      MAPI.create_user_with_token(followee)
+
+      response = MAPI.follow(follower, followee, token)
+      response.code.should == 201
+
+      response = MAPI.follow(follower, followee, token)
+      response.code.should == 201
+
+      MAPI.get_user(followee)["followers"].should include(follower)
+      MAPI.get_user(follower)["following"].should include(followee)
+    end
+
+    it "doesn't follow :other if authenticated in as someone other than :username" do
+      other = random_string(8)
+      token = MAPI.create_user_with_token(other)
+
+      follower = random_string(8)
+      MAPI.create_user_with_token(follower)
+
+      followee = random_string(8)
+      MAPI.create_user_with_token(followee)
+
+      response = MAPI.follow(follower, followee, token)
+      response.code.should == 403
+
+      MAPI.get_user(followee)["followers"].should_not include(follower)
+      MAPI.get_user(follower)["following"].should_not include(followee)
+    end
+
+    it "doesn't follow :other if not authenticated" do
+      follower = random_string(8)
+      MAPI.create_user_with_token(follower)
+
+      followee = random_string(8)
+      MAPI.create_user_with_token(followee)
+
+      response = MAPI.follow(follower, followee, "bogus")
+      response.code.should == 401
+
+      MAPI.get_user(followee)["followers"].should_not include(follower)
+      MAPI.get_user(follower)["following"].should_not include(followee)
+    end
   end
 
   describe "DELETE /users/:username/following/:other" do
