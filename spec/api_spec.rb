@@ -385,10 +385,91 @@ describe "Microblogging API" do
   end
 
   describe "DELETE /users/:username/following/:other" do
-    it "unfollows :other"
-    it "is idempotent"
-    it "doesn't unfollow :other if authenticated in as someone other than :username"
-    it "doesn't unfollow :other if not authenticated"
+    it "unfollows :other" do
+      follower = random_string(8)
+      token = MAPI.create_user_with_token(follower)
+
+      followee = random_string(8)
+      MAPI.create_user_with_token(followee)
+
+      response = MAPI.follow(follower, followee, token)
+      response.code.should == 201
+
+      MAPI.get_user(followee)["followers"].should include(follower)
+      MAPI.get_user(follower)["following"].should include(followee)
+
+      response = MAPI.unfollow(follower, followee, token)
+      response.code.should == 204
+
+      MAPI.get_user(followee)["followers"].should_not include(follower)
+      MAPI.get_user(follower)["following"].should_not include(followee)
+    end
+
+    it "404s if the followership doesn't exist" do
+      follower = random_string(8)
+      token = MAPI.create_user_with_token(follower)
+
+      followee = random_string(8)
+      MAPI.create_user_with_token(followee)
+
+      response = MAPI.follow(follower, followee, token)
+      response.code.should == 201
+
+      MAPI.get_user(followee)["followers"].should include(follower)
+      MAPI.get_user(follower)["following"].should include(followee)
+
+      response = MAPI.unfollow(follower, followee, token)
+      response.code.should == 204
+
+      response = MAPI.unfollow(follower, followee, token)
+      response.code.should == 404
+
+      MAPI.get_user(followee)["followers"].should_not include(follower)
+      MAPI.get_user(follower)["following"].should_not include(followee)
+    end
+
+    it "doesn't unfollow :other if authenticated in as someone other than :username" do
+      other = random_string(8)
+      other_token = MAPI.create_user_with_token(other)
+
+      follower = random_string(8)
+      token = MAPI.create_user_with_token(follower)
+
+      followee = random_string(8)
+      MAPI.create_user_with_token(followee)
+
+      response = MAPI.follow(follower, followee, token)
+      response.code.should == 201
+
+      MAPI.get_user(followee)["followers"].should include(follower)
+      MAPI.get_user(follower)["following"].should include(followee)
+
+      response = MAPI.unfollow(follower, followee, other_token)
+      response.code.should == 403
+
+      MAPI.get_user(followee)["followers"].should include(follower)
+      MAPI.get_user(follower)["following"].should include(followee)
+    end
+
+    it "doesn't unfollow :other if not authenticated" do
+      follower = random_string(8)
+      token = MAPI.create_user_with_token(follower)
+
+      followee = random_string(8)
+      MAPI.create_user_with_token(followee)
+
+      response = MAPI.follow(follower, followee, token)
+      response.code.should == 201
+
+      MAPI.get_user(followee)["followers"].should include(follower)
+      MAPI.get_user(follower)["following"].should include(followee)
+
+      response = MAPI.unfollow(follower, followee, "junk")
+      response.code.should == 401
+
+      MAPI.get_user(followee)["followers"].should include(follower)
+      MAPI.get_user(follower)["following"].should include(followee)
+    end
   end
 
   describe "GET /users/:username/timeline" do

@@ -52,6 +52,10 @@ class MAPI
     put("/users/#{follower}/following/#{followee}", token)
   end
 
+  def self.unfollow(follower, followee, token)
+    delete("/users/#{follower}/following/#{followee}", token)
+  end
+
   def self.get_json(path)
     response = get(path)
     response.code.should == 200
