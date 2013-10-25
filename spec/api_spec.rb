@@ -473,11 +473,112 @@ describe "Microblogging API" do
   end
 
   describe "GET /users/:username/timeline" do
-    it "shows the 50 most recent posts of the users that :username is following"
+    it "shows the 50 most recent posts of the users that :username is following" do
+      user1 = random_string(8)
+      token1 = MAPI.create_user_with_token(user1)
+      user2 = random_string(8)
+      token2 = MAPI.create_user_with_token(user2)
+      user3 = random_string(8)
+      token3 = MAPI.create_user_with_token(user3)
+
+      post_ids = 51.times.map do |i|
+        user, token = [[user1, token1], [user2, token2], [user3, token3]][i%3]
+
+        response = MAPI.create_post(
+          :username => user,
+          :token => token,
+          :text => "This is a message!",
+          )
+
+        response.code.should == 303
+        response.headers[:location][/\d+\z/].to_i
+      end.reverse
+
+      follower = random_string(8)
+      follower_token = MAPI.create_user_with_token(follower)
+
+      response = MAPI.follow(follower, user1, follower_token)
+      response = MAPI.follow(follower, user2, follower_token)
+      response = MAPI.follow(follower, user3, follower_token)
+
+      posts = MAPI.get_timeline(follower)["posts"]
+
+      posts.map{ |p| p['id'] }.should == post_ids.first(50)
+    end
 
     context "pagination" do
-      it "loads subsequent pages"
-      it "uses cursors properly to avoid repeats if the list has changed since the previous page load"
+      it "loads subsequent pages" do
+        user1 = random_string(8)
+        token1 = MAPI.create_user_with_token(user1)
+        user2 = random_string(8)
+        token2 = MAPI.create_user_with_token(user2)
+        user3 = random_string(8)
+        token3 = MAPI.create_user_with_token(user3)
+
+        post_ids = 51.times.map do |i|
+          user, token = [[user1, token1], [user2, token2], [user3, token3]][i%3]
+
+          response = MAPI.create_post(
+            :username => user,
+            :token => token,
+            :text => "This is a message!",
+            )
+
+          response.code.should == 303
+          response.headers[:location][/\d+\z/].to_i
+        end.reverse
+
+        follower = random_string(8)
+        follower_token = MAPI.create_user_with_token(follower)
+
+        response = MAPI.follow(follower, user1, follower_token)
+        response = MAPI.follow(follower, user2, follower_token)
+        response = MAPI.follow(follower, user3, follower_token)
+
+        next_url = MAPI.get_timeline(follower)["next"]
+
+        posts = JSON.parse(MAPI.get(next_url))["posts"]
+        posts.map{ |p| p['id'] }.should == [post_ids.last]
+      end
+
+      it "uses cursors properly to avoid repeats if the list has changed since the previous page load" do
+        user1 = random_string(8)
+        token1 = MAPI.create_user_with_token(user1)
+        user2 = random_string(8)
+        token2 = MAPI.create_user_with_token(user2)
+        user3 = random_string(8)
+        token3 = MAPI.create_user_with_token(user3)
+
+        post_ids = 53.times.map do |i|
+          user, token = [[user1, token1], [user2, token2], [user3, token3]][i%3]
+
+          response = MAPI.create_post(
+            :username => user,
+            :token => token,
+            :text => "This is a message!",
+            )
+
+          response.code.should == 303
+          [response.headers[:location][/\d+\z/].to_i, token]
+        end.reverse
+
+        follower = random_string(8)
+        follower_token = MAPI.create_user_with_token(follower)
+
+        response = MAPI.follow(follower, user1, follower_token)
+        response = MAPI.follow(follower, user2, follower_token)
+        response = MAPI.follow(follower, user3, follower_token)
+
+        next_url = MAPI.get_timeline(follower)["next"]
+
+        (post_ids.first(51) + [post_ids.last]).each do |pid, token|
+          delete_response = MAPI.delete("/posts/#{pid}", token)
+          delete_response.code.should == 204
+        end
+
+        posts = JSON.parse(MAPI.get(next_url))["posts"]
+        posts.map{ |p| p['id'] }.should == [post_ids[51][0]]
+      end
     end
   end
 end

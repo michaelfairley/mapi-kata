@@ -48,6 +48,10 @@ class MAPI
     get_json("/users/#{username}/posts")
   end
 
+  def self.get_timeline(username)
+    get_json("/users/#{username}/timeline")
+  end
+
   def self.follow(follower, followee, token)
     put("/users/#{follower}/following/#{followee}", token)
   end
