@@ -77,7 +77,7 @@ class MAPI
   def self.post(path, token=nil, params={})
     url = uri(path)
 
-    headers = {}
+    headers = {"Content-Type" => "application/json"}
     headers["Authentication"] = "Token #{token}" if token
 
     RestClient.post(url, JSON.dump(params), headers) do |response|
@@ -99,7 +99,7 @@ class MAPI
   def self.delete(path, token=nil)
     url = uri(path)
 
-    headers = {}
+    headers = {"Content-Type" => "application/json"}
     headers["Authentication"] = "Token #{token}" if token
 
     RestClient.delete(url, headers) do |response|
