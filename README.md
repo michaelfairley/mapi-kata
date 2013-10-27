@@ -13,3 +13,4 @@ The API contains intentional warts in order to help determine how easy it is to 
 
 Current implementation's I've made for this kata:
 - [Sinatra and Sequel](https://github.com/michaelfairley/mapi-kata-sinatra-sequel)
+- [Rails::API](https://github.com/michaelfairley/mapi-kata-rails-api)
