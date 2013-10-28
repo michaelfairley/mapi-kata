@@ -1,6 +1,6 @@
 require "sequel"
 
-DEFAULT_DB = Sequel.connect('postgres://localhost/')
+DEFAULT_DB = Sequel.connect('postgres://localhost/postgres')
 
 DEFAULT_DB.run("DROP DATABASE IF EXISTS microblog_api_kata")
 DEFAULT_DB.run("CREATE DATABASE microblog_api_kata")
