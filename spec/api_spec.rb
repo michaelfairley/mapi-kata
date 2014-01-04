@@ -14,10 +14,10 @@ describe "Microblogging API" do
       response.code.should == 303
       response.headers[:location].should == MAPI.uri("/users/#{username}")
 
-      MAPI.get_user(username).should include(
+      MAPI.get_user(username).should == {
         "username" => username,
         "real_name" => realname,
-      )
+      }
     end
 
     it "doesn't create the user if the username already exists" do

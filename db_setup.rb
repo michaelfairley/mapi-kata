@@ -9,9 +9,9 @@ DB = Sequel.connect('postgres://localhost/microblog_api_kata')
 
 DB.create_table :users do
   primary_key :id
-  String :username, :text => true
+  String :username, :text => true, :unique => true
   String :password, :text => true
-  String :realname, :text => true, :unique => true
+  String :realname, :text => true
 end
 
 DB.create_table :tokens do
