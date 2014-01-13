@@ -17,6 +17,8 @@ describe "Microblogging API" do
       MAPI.get_user(username).should == {
         "username" => username,
         "real_name" => realname,
+        "followers" => [],
+        "following" => [],
       }
     end
 
@@ -263,6 +265,7 @@ describe "Microblogging API" do
       posts = MAPI.get_posts(username)["posts"]
 
       posts.map{ |p| p['id'] }.should == post_ids.first(50)
+      posts.all?{ |p| p['author'] == username }.should == true
     end
 
     it "404s if the user doesn't exist" do
@@ -481,7 +484,7 @@ describe "Microblogging API" do
       user3 = random_string(8)
       token3 = MAPI.create_user_with_token(user3)
 
-      post_ids = 51.times.map do |i|
+      created_posts = 51.times.map do |i|
         user, token = [[user1, token1], [user2, token2], [user3, token3]][i%3]
 
         response = MAPI.create_post(
@@ -491,7 +494,7 @@ describe "Microblogging API" do
           )
 
         response.code.should == 303
-        response.headers[:location][/\d+\z/].to_i
+        [response.headers[:location][/\d+\z/].to_i, user]
       end.reverse
 
       follower = random_string(8)
@@ -503,7 +506,8 @@ describe "Microblogging API" do
 
       posts = MAPI.get_timeline(follower)["posts"]
 
-      posts.map{ |p| p['id'] }.should == post_ids.first(50)
+      posts.map{ |p| p['id'] }.should == created_posts.first(50).map{ |p| p[0] }
+      posts.map{ |p| p['author'] }.should == created_posts.first(50).map{ |p| p[1] }
     end
 
     context "pagination" do
